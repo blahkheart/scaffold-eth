@@ -83,7 +83,9 @@ export default function Account({
 
   const { currentTheme } = useThemeSwitcher();
 
-  const display = minimized && (
+  const display = minimized ? (
+    ""
+  ) : (
     <span>
       {address ? (
         <Address address={address} ensProvider={mainnetProvider} blockExplorer={blockExplorer} />

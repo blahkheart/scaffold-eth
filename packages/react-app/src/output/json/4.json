@@ -1,0 +1,39 @@
+{
+  "name": "Dread Gang #4",
+  "description": "The OGs of the Metaverse. Come chill, shill and vibe with the Dread Gang",
+  "image": "https://ipfs.io/ipfs/bafybeiblu3m2de4tytbopoyvuoismacxlzz3oduqtihzz67xu3exwtagpe/4.png",
+  "dna": "df0a5b2ed651f2c7c4a2abb140dc520c57637947",
+  "edition": 4,
+  "date": 1657753376441,
+  "attributes": [
+    {
+      "trait_type": "Background",
+      "value": "Black"
+    },
+    {
+      "trait_type": "Eyeball",
+      "value": "White"
+    },
+    {
+      "trait_type": "Eye color",
+      "value": "Green"
+    },
+    {
+      "trait_type": "Iris",
+      "value": "Small"
+    },
+    {
+      "trait_type": "Shine",
+      "value": "Shapes"
+    },
+    {
+      "trait_type": "Bottom lid",
+      "value": "High"
+    },
+    {
+      "trait_type": "Top lid",
+      "value": "High"
+    }
+  ],
+  "compiler": "HashLips Art Engine"
+}

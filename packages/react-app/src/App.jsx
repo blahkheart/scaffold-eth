@@ -1,16 +1,8 @@
+import Portis from "@portis/web3";
 import WalletConnectProvider from "@walletconnect/web3-provider";
-//import Torus from "@toruslabs/torus-embed"
-import WalletLink from "walletlink";
 import { Alert, Button, Card, Col, Input, List, Menu, Row } from "antd";
 import "antd/dist/antd.css";
-import React, { useCallback, useEffect, useState } from "react";
-import ReactJson from "react-json-view";
-import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
-import Web3Modal from "web3modal";
-import "./App.css";
-import { Account, Address, AddressInput, Contract, Faucet, GasGauge, Header, Ramp, ThemeSwitch } from "./components";
-import {INFURA_ID, NETWORK, NETWORKS } from "./constants";
-import { Transactor } from "./helpers";
+import Authereum from "authereum";
 import {
   useBalance,
   useContractLoader,
@@ -19,24 +11,27 @@ import {
   useOnBlock,
   useUserProviderAndSigner,
 } from "eth-hooks";
-import {
-  useEventListener,
-} from "eth-hooks/events/useEventListener";
-import {
-  useExchangeEthPrice,
-} from "eth-hooks/dapps/dex";
+import { useExchangeEthPrice } from "eth-hooks/dapps/dex";
+import { useEventListener } from "eth-hooks/events/useEventListener";
+import Fortmatic from "fortmatic";
+// https://www.npmjs.com/package/ipfs-http-client
+// import { create } from "ipfs-http-client";
+import React, { useCallback, useEffect, useState } from "react";
+import ReactJson from "react-json-view";
+import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
+//import Torus from "@toruslabs/torus-embed"
+import WalletLink from "walletlink";
+import Web3Modal from "web3modal";
+import "./App.css";
+import { Account, Address, AddressInput, Contract, Faucet, GasGauge, Header, Ramp, ThemeSwitch } from "./components";
+import { INFURA_ID, NETWORK, NETWORKS } from "./constants";
+import { Transactor } from "./helpers";
+import { useContractConfig } from "./hooks";
 // import Hints from "./Hints";
 
 const { BufferList } = require("bl");
-// https://www.npmjs.com/package/ipfs-http-client
 const ipfsAPI = require("ipfs-http-client");
 const ipfs = ipfsAPI({ host: "ipfs.infura.io", port: "5001", protocol: "https" });
-
-
-import { useContractConfig } from "./hooks"
-import Portis from "@portis/web3";
-import Fortmatic from "fortmatic";
-import Authereum from "authereum";
 
 const { ethers } = require("ethers");
 
@@ -44,7 +39,7 @@ const { ethers } = require("ethers");
     Welcome to 🏗 scaffold-eth !
 
     Code:
-    https://github.com/austintgriffith/scaffold-eth
+    https://github.com/scaffold-eth/scaffold-eth
 
     Support:
     https://t.me/joinchat/KByvmRe5wkR-8F_zz6AjpA
@@ -109,7 +104,11 @@ if (DEBUG) console.log("📡 Connecting to Mainnet Ethereum");
 const scaffoldEthProvider = navigator.onLine
   ? new ethers.providers.StaticJsonRpcProvider("https://rpc.scaffoldeth.io:48544")
   : null;
-const poktMainnetProvider = navigator.onLine ? new ethers.providers.StaticJsonRpcProvider("https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406") : null;
+const poktMainnetProvider = navigator.onLine
+  ? new ethers.providers.StaticJsonRpcProvider(
+      "https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406",
+    )
+  : null;
 const mainnetInfura = navigator.onLine
   ? new ethers.providers.StaticJsonRpcProvider("https://mainnet.infura.io/v3/" + INFURA_ID)
   : null;
@@ -153,7 +152,6 @@ const web3Modal = new Web3Modal({
           100: "https://dai.poa.network", // xDai
         },
       },
-
     },
     portis: {
       display: {
@@ -172,19 +170,6 @@ const web3Modal = new Web3Modal({
         key: "pk_live_5A7C91B2FC585A17", // required
       },
     },
-    // torus: {
-    //   package: Torus,
-    //   options: {
-    //     networkParams: {
-    //       host: "https://localhost:8545", // optional
-    //       chainId: 1337, // optional
-    //       networkId: 1337 // optional
-    //     },
-    //     config: {
-    //       buildEnv: "development" // optional
-    //     },
-    //   },
-    // },
     "custom-walletlink": {
       display: {
         logo: "https://play-lh.googleusercontent.com/PjoJoG27miSglVBXoXrxBSLveV6e3EeBPpNY55aiUUBM9Q1RCETKCOqdOkX2ZydqVf0",
@@ -459,8 +444,6 @@ function App(props) {
     );
   }
 
-
-
   const loadWeb3Modal = useCallback(async () => {
     const provider = await web3Modal.connect();
     setInjectedProvider(new ethers.providers.Web3Provider(provider));
@@ -527,11 +510,162 @@ function App(props) {
   const [sending, setSending] = useState();
   const [ipfsHash, setIpfsHash] = useState();
   const [ipfsDownHash, setIpfsDownHash] = useState();
-
   const [downloading, setDownloading] = useState();
   const [ipfsContent, setIpfsContent] = useState();
-
   const [transferToAddresses, setTransferToAddresses] = useState({});
+  const [minting, setMinting] = useState(false);
+  const [count, setCount] = useState(1);
+
+  // the json for the nfts
+  const json = {
+    1: {
+      description: "It's actually a bison?",
+      external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
+      image: "https://austingriffith.com/images/paintings/buffalo.jpg",
+      name: "Buffalo",
+      attributes: [
+        {
+          trait_type: "BackgroundColor",
+          value: "green",
+        },
+        {
+          trait_type: "Eyes",
+          value: "googly",
+        },
+        {
+          trait_type: "Stamina",
+          value: 42,
+        },
+      ],
+    },
+    2: {
+      description: "What is it so worried about?",
+      external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
+      image: "https://austingriffith.com/images/paintings/zebra.jpg",
+      name: "Zebra",
+      attributes: [
+        {
+          trait_type: "BackgroundColor",
+          value: "blue",
+        },
+        {
+          trait_type: "Eyes",
+          value: "googly",
+        },
+        {
+          trait_type: "Stamina",
+          value: 38,
+        },
+      ],
+    },
+    3: {
+      description: "What a horn!",
+      external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
+      image: "https://austingriffith.com/images/paintings/rhino.jpg",
+      name: "Rhino",
+      attributes: [
+        {
+          trait_type: "BackgroundColor",
+          value: "pink",
+        },
+        {
+          trait_type: "Eyes",
+          value: "googly",
+        },
+        {
+          trait_type: "Stamina",
+          value: 22,
+        },
+      ],
+    },
+    4: {
+      description: "Is that an underbyte?",
+      external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
+      image: "https://austingriffith.com/images/paintings/fish.jpg",
+      name: "Fish",
+      attributes: [
+        {
+          trait_type: "BackgroundColor",
+          value: "blue",
+        },
+        {
+          trait_type: "Eyes",
+          value: "googly",
+        },
+        {
+          trait_type: "Stamina",
+          value: 15,
+        },
+      ],
+    },
+    5: {
+      description: "So delicate.",
+      external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
+      image: "https://austingriffith.com/images/paintings/flamingo.jpg",
+      name: "Flamingo",
+      attributes: [
+        {
+          trait_type: "BackgroundColor",
+          value: "black",
+        },
+        {
+          trait_type: "Eyes",
+          value: "googly",
+        },
+        {
+          trait_type: "Stamina",
+          value: 6,
+        },
+      ],
+    },
+    6: {
+      description: "Raaaar!",
+      external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
+      image: "https://austingriffith.com/images/paintings/godzilla.jpg",
+      name: "Godzilla",
+      attributes: [
+        {
+          trait_type: "BackgroundColor",
+          value: "orange",
+        },
+        {
+          trait_type: "Eyes",
+          value: "googly",
+        },
+        {
+          trait_type: "Stamina",
+          value: 99,
+        },
+      ],
+    },
+  };
+
+  const mintItem = async () => {
+    // upload to ipfs
+    const uploaded = await ipfs.add(JSON.stringify(json[count]));
+    setCount(count + 1);
+    console.log("Uploaded Hash: ", uploaded);
+    const result = tx(
+      writeContracts &&
+        writeContracts.YourCollectible &&
+        writeContracts.YourCollectible.mintItem(address, uploaded.path),
+      update => {
+        console.log("📡 Transaction Update:", update);
+        if (update && (update.status === "confirmed" || update.status === 1)) {
+          console.log(" 🍾 Transaction " + update.hash + " finished!");
+          console.log(
+            " ⛽️ " +
+              update.gasUsed +
+              "/" +
+              (update.gasLimit || update.gas) +
+              " @ " +
+              parseFloat(update.gasPrice) / 1000000000 +
+              " gwei",
+          );
+        }
+      },
+    );
+  };
 
   return (
     <div className="App">
@@ -591,14 +725,20 @@ function App(props) {
             </Link>
           </Menu.Item>
         </Menu>
-
         <Switch>
           <Route exact path="/">
-            {/*
-                🎛 this scaffolding is full of commonly used components
-                this <Contract/> component will automatically parse your ABI
-                and give you a form to interact with it locally
-            */}
+            <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+              <Button
+                disabled={minting}
+                shape="round"
+                size="large"
+                onClick={() => {
+                  mintItem();
+                }}
+              >
+                MINT NFT
+              </Button>
+            </div>
             <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
               <List
                 bordered
@@ -755,16 +895,6 @@ function App(props) {
               blockExplorer={blockExplorer}
               contractConfig={contractConfig}
             />
-            {/*
-            <Contract
-              name="UNI"
-              customContract={mainnetContracts && mainnetContracts.contracts && mainnetContracts.contracts.UNI}
-              signer={userSigner}
-              provider={mainnetProvider}
-              address={address}
-              blockExplorer={blockExplorer}
-            />
-            */}
           </Route>
         </Switch>
       </BrowserRouter>
