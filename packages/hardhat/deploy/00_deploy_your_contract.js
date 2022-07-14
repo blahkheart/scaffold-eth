@@ -11,7 +11,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [
       "Cool NFT", // Name
       "YCB", // Symbol
-      "https://ipfs.io/ipfs/bafybeiblu3m2de4tytbopoyvuoismacxlzz3oduqtihzz67xu3exwtagpe/", // IPFS URL TO UPLOADED JSON DIRECTORY
+      "https://ipfs.io/ipfs/bafybeiblxsa27fildmjqx52g35uxzndkn4q57l3wzxyjnd5k3iypyz3che/", // IPFS URL TO UPLOADED JSON DIRECTORY
       "" // Not revealed URI, can be set to empty string or different URL if you don't want tp reveal your collection at deployment
     ],
     log: true,
@@ -24,7 +24,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
     // To take ownership of YourCollectible using the ownable library uncomment next line and add the
     // address you want to be the owner.
-  const owner = "0x1486767EfF6109725F929c041CBA242D5A52c7E1";
+  const owner = "0xCA7632327567796e51920F6b16373e92c7823854";
   const tx = await YourCollectible.transferOwnership(owner);
   console.log(`"transferring ownership to ${owner} with hash: "`, tx.hash);
   console.log("transferred ownership to ", owner);

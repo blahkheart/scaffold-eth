@@ -21,7 +21,7 @@ contract YourCollectible is ERC721Enumerable, ERC721URIStorage, Ownable {
   string baseURI;
   string public baseExtension = ".json";
   uint256 public cost = 0.005 ether; // If you want to charge a fee for minting
-  uint256 public maxSupply = 10000;
+  uint256 public maxSupply = 323;
   bool public paused = false;
   bool public revealed = false;
   string public notRevealedUri;

@@ -277,9 +277,7 @@ function App(props) {
   const balance = useContractReader(readContracts, "YourCollectible", "balanceOf", [address]);
   console.log("🤗 balance:", balance);
   const maxSupply = useContractReader(readContracts, "YourCollectible", "maxSupply");
-  console.log("max supply ", maxSupply?.toNumber());
   const circulatingSupply = useContractReader(readContracts, "YourCollectible", "totalSupply");
-  console.log("circulating Supply ", circulatingSupply?.toNumber());
 
   // 📟 Listen for broadcast events
   const transferEvents = useEventListener(readContracts, "YourCollectible", "Transfer", localProvider, 1);

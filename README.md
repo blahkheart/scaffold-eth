@@ -203,7 +203,7 @@ When you are ready, run the following command and your outputted art will be in 
 cd to ./react-app
 
 ```sh
-npm run build
+npm run generate
 ```
 
 or
@@ -334,8 +334,8 @@ Trait type: Top lid
 That's all for the hashlips art engine
 Hope you create some awesome artworks with this code 👄
 
-```
-Extras
+
+## Extras
 
 👛 Open an incognito window and navigate to http://localhost:3000 (You'll notice it has a new wallet address).
 
@@ -436,6 +436,11 @@ yarn ipfs
 👩‍❤️‍👨 Share your public url with a friend and ask them for their address to send them a collectible :)
 
 ![nft15](https://user-images.githubusercontent.com/526558/124387205-00c3fb80-dcb4-11eb-9e2f-29585e323037.gif)
+
+### 📜 Contract Verification
+
+Update the `api-key` in `packages/hardhat/package.json`. You can get your key [here](https://etherscan.io/myapikey).
+> Now you are ready to run the `yarn verify --network your_network` command to verify your contracts on etherscan 🛰
 
 ------------
 
