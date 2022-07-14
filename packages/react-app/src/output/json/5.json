@@ -1,10 +1,10 @@
 {
   "name": "Cool NFTs #5",
   "description": "Come chill, shill and vibe with the Cool NFTs",
-  "image": "https://ipfs.io/ipfs/bafybeiblu3m2de4tytbopoyvuoismacxlzz3oduqtihzz67xu3exwtagpe/5.png",
-  "dna": "cfa27eeba852b5a1cc1b861892aa36c65b2df024",
+  "image": "https://ipfs.io/ipfs/bafybeice6isuly4v7rqqgkpwx56jbzwyoofh6rykmmjzvk53v62ufuemey/5.png",
+  "dna": "a07a9dad7fa467f9841644fe96e551bec34fca68",
   "edition": 5,
-  "date": 1657753376682,
+  "date": 1657826137496,
   "attributes": [
     {
       "trait_type": "Background",
@@ -12,7 +12,7 @@
     },
     {
       "trait_type": "Eyeball",
-      "value": "White"
+      "value": "Red"
     },
     {
       "trait_type": "Eye color",

@@ -1,10 +1,10 @@
 {
   "name": "Cool NFTs #1",
   "description": "Come chill, shill and vibe with the Cool NFTs",
-  "image": "https://ipfs.io/ipfs/bafybeiblu3m2de4tytbopoyvuoismacxlzz3oduqtihzz67xu3exwtagpe/1.png",
-  "dna": "33f9c0add9a15304d43d16af3804204b34422565",
+  "image": "https://ipfs.io/ipfs/bafybeice6isuly4v7rqqgkpwx56jbzwyoofh6rykmmjzvk53v62ufuemey/1.png",
+  "dna": "69ae56a4608893e41edcf2484be75dbb86b75766",
   "edition": 1,
-  "date": 1657753375727,
+  "date": 1657826136801,
   "attributes": [
     {
       "trait_type": "Background",
@@ -12,7 +12,7 @@
     },
     {
       "trait_type": "Eyeball",
-      "value": "White"
+      "value": "Red"
     },
     {
       "trait_type": "Eye color",
@@ -20,7 +20,7 @@
     },
     {
       "trait_type": "Iris",
-      "value": "Small"
+      "value": "Medium"
     },
     {
       "trait_type": "Shine",
@@ -28,11 +28,11 @@
     },
     {
       "trait_type": "Bottom lid",
-      "value": "High"
+      "value": "Middle"
     },
     {
       "trait_type": "Top lid",
-      "value": "Middle"
+      "value": "High"
     }
   ],
   "compiler": "HashLips Art Engine"

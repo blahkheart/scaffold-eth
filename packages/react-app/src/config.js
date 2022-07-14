@@ -7,7 +7,7 @@ const network = NETWORK.eth;
 // General metadata for Ethereum
 const namePrefix = "Cool NFTs";
 const description = "Come chill, shill and vibe with the Cool NFTs";
-const baseUri = "https://ipfs.io/ipfs/bafybeiblu3m2de4tytbopoyvuoismacxlzz3oduqtihzz67xu3exwtagpe"; // IPFS URL TO UPLOADED IMAGE DIRECTORY
+const baseUri = "https://ipfs.io/ipfs/bafybeice6isuly4v7rqqgkpwx56jbzwyoofh6rykmmjzvk53v62ufuemey"; // IPFS URL TO UPLOADED IMAGE DIRECTORY
 
 const solanaMetadata = {
   symbol: "YCB",
@@ -24,7 +24,7 @@ const solanaMetadata = {
 // If you have selected Solana then the collection starts from 0 automatically
 const layerConfigurations = [
   {
-    growEditionSizeTo: 5,
+    growEditionSizeTo: 323,
     layersOrder: [
       { name: "Background" },
       { name: "Eyeball" },

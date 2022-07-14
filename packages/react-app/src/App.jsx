@@ -1,6 +1,6 @@
 import Portis from "@portis/web3";
 import WalletConnectProvider from "@walletconnect/web3-provider";
-import { Alert, Button, Card, Col, Input, List, Menu, Row } from "antd";
+import { Alert, Button, Card, Col, Input, List, Menu, Row, Spin, Statistic } from "antd";
 import "antd/dist/antd.css";
 import Authereum from "authereum";
 import {
@@ -58,7 +58,7 @@ const { ethers } = require("ethers");
 */
 
 /// 📡 What chain are your contracts deployed to?
-const targetNetwork = NETWORKS.localhost; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
+const targetNetwork = NETWORKS.rinkeby; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
 
 // 😬 Sorry for all the console logging
 const DEBUG = true;
@@ -276,6 +276,10 @@ function App(props) {
   // keep track of a variable from the contract in the local React state:
   const balance = useContractReader(readContracts, "YourCollectible", "balanceOf", [address]);
   console.log("🤗 balance:", balance);
+  const maxSupply = useContractReader(readContracts, "YourCollectible", "maxSupply");
+  console.log("max supply ", maxSupply?.toNumber());
+  const circulatingSupply = useContractReader(readContracts, "YourCollectible", "totalSupply");
+  console.log("circulating Supply ", circulatingSupply?.toNumber());
 
   // 📟 Listen for broadcast events
   const transferEvents = useEventListener(readContracts, "YourCollectible", "Transfer", localProvider, 1);
@@ -610,6 +614,12 @@ function App(props) {
         <Switch>
           <Route exact path="/">
             <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+              <Card style={{ width: 400, margin: "auto", marginBottom: 35 }}>
+                {circulatingSupply && maxSupply 
+                  ? <Statistic title="Minted" value={circulatingSupply} suffix={`/ ${maxSupply.toNumber()}`} /> 
+                  : <Spin size="small" />
+                }
+              </Card>
               <Button
                 disabled={minting}
                 shape="round"
