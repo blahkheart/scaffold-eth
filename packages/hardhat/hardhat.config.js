@@ -80,8 +80,8 @@ module.exports = {
         mnemonic: mnemonic(),
       },
     },
-    xdai: {
-      url: "https://rpc.xdaichain.com/",
+    gnosis: {
+      url: "https://rpc.gnosischain.com",
       accounts: {
         mnemonic: mnemonic(),
       },

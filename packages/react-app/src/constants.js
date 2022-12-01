@@ -46,14 +46,14 @@ export const NETWORKS = {
     blockExplorer: "https://goerli.etherscan.io/",
     rpcUrl: `https://goerli.infura.io/v3/${INFURA_ID}`,
   },
-  xdai: {
-    name: "xdai",
+  gnosis: {
+    name: "gnosis",
     color: "#48a9a6",
     chainId: 100,
     price: 1,
     gasPrice: 1000000000,
-    rpcUrl: "https://dai.poa.network",
-    faucet: "https://xdai-faucet.top/",
+    rpcUrl: "https://rpc.gnosischain.com",
+    faucet: "https://gnosisfaucet.com/",
     blockExplorer: "https://blockscout.com/poa/xdai/",
   },
   polygon: {
