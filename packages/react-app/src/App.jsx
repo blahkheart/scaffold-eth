@@ -1,4 +1,4 @@
-import { Button, Col, Menu, Row } from "antd";
+import { Button, Col, Menu, List, Row } from "antd";
 
 import "antd/dist/antd.css";
 import {
@@ -9,31 +9,37 @@ import {
   // useOnBlock,
   useUserProviderAndSigner,
 } from "eth-hooks";
+import { useEventListener } from "eth-hooks/events/useEventListener";
 import { useExchangeEthPrice } from "eth-hooks/dapps/dex";
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, Route, Switch, useLocation } from "react-router-dom";
 import "./App.css";
 import {
+  Address,
   Account,
   Contract,
   Faucet,
   GasGauge,
   Header,
+  Level,
   Ramp,
   ThemeSwitch,
   NetworkDisplay,
   FaucetHint,
   NetworkSwitch,
 } from "./components";
+import { Dashboard, Levels } from "./views";
 import { NETWORKS, ALCHEMY_KEY } from "./constants";
 import externalContracts from "./contracts/external_contracts";
 // contracts
 import deployedContracts from "./contracts/hardhat_contracts.json";
 import { getRPCPollTime, Transactor, Web3ModalSetup } from "./helpers";
 import { Home, ExampleUI, Hints, Subgraph } from "./views";
-import { useStaticJsonRPC } from "./hooks";
+import { useStaticJsonRPC, useUnlockState } from "./hooks";
 
 const { ethers } = require("ethers");
+const abis = require("@unlock-protocol/contracts");
+
 /*
     Welcome to 🏗 scaffold-eth !
 
@@ -162,6 +168,17 @@ function App(props) {
   // If you want to bring in the mainnet DAI contract it would look like:
   const mainnetContracts = useContractLoader(mainnetProvider, contractConfig);
 
+  // DGToken balance
+  const tokenBalance = useContractReader(readContracts, "DGToken", "balanceOf", [address]);
+
+  // 📟 Listen for broadcasted Transfer events
+  const transferEvents = useEventListener(readContracts, "DreadGang", "Transfer", localProvider, 1);
+  console.log("📟 Transfer events:", transferEvents);
+
+  // 📟 Listen for broadcasted CreateLevel events
+  const createLevelEvents = useEventListener(readContracts, "DreadGang", "CreateLevel", localProvider, 1);
+  console.log("📟 CreateLevel events:", createLevelEvents);
+
   // If you want to call a function on a new block
   // useOnBlock(mainnetProvider, () => {
   //   console.log(`⛓ A new mainnet block is here: ${mainnetProvider._lastBlockNumber}`);
@@ -175,9 +192,6 @@ function App(props) {
     ["0x34aA3F359A9D614239015126635CE7732c18fDF3"],
     mainnetProviderPollingTime,
   );
-
-  // keep track of a variable from the contract in the local React state:
-  const purpose = useContractReader(readContracts, "YourContract", "purpose", [], localProviderPollingTime);
 
   /*
   const addressFromENS = useResolveName(mainnetProvider, "austingriffith.eth");
@@ -246,11 +260,109 @@ function App(props) {
     // eslint-disable-next-line
   }, [setInjectedProvider]);
 
+  // DreadGang Contract Address
+  const dreadGangAddress = readContracts && readContracts.DreadGang && readContracts.DreadGang.address;
+
+  const [route, setRoute] = useState();
+
+  useEffect(() => {
+    setRoute(window.location.pathname);
+  }, [setRoute]);
+
+  const [isSquadMember, setIsSquadMember] = useState();
+
+  useEffect(() => {
+    const _isSquadMember = async () => {
+      try {
+        const isMember = await readContracts.DreadGang.isSquadMember(address);
+        setIsSquadMember(isMember);
+      } catch (e) {
+        console.log(e);
+      }
+    };
+    _isSquadMember();
+  }, [address, isSquadMember]);
+
   useEffect(() => {
     if (web3Modal.cachedProvider) {
       loadWeb3Modal();
     }
   }, [loadWeb3Modal]);
+
+  ////////////////Unlock Protocol///////////////////
+  useEffect(() => {
+    const unlockAddress = "0x627118a4fB747016911e5cDA82e2E77C531e8206"; //deployed Unlock Contract Goerli
+    const publicLockAddress = "0x4604392da245ada386bf90118ace7e787e2c221f"; //Lock on Goerli
+    setDeployedUnlockAddress(unlockAddress);
+    setPublicLockAddress(publicLockAddress);
+  }, []);
+
+  const [deployedUnlockAddress, setDeployedUnlockAddress] = useState();
+  const [publicLockAddress, setPublicLockAddress] = useState();
+  const [mintLock, setPublicLock] = useState();
+  const [unlock, setUnlock] = useState();
+
+  useEffect(() => {
+    const readyUnlock = () => {
+      let unlockContract;
+      let publicLockContract;
+      try {
+        if (deployedUnlockAddress) {
+          unlockContract = new ethers.Contract(deployedUnlockAddress, abis.UnlockV11.abi, userSigner);
+        }
+        if (publicLockAddress) {
+          publicLockContract = new ethers.Contract(publicLockAddress, abis.PublicLockV10.abi, userSigner);
+        }
+      } catch (e) {
+        console.log(e);
+      }
+      setUnlock(unlockContract);
+      setPublicLock(publicLockContract);
+    };
+    readyUnlock();
+  }, [address, yourLocalBalance]);
+  const hasMintKey = useUnlockState(mintLock, address);
+  // console.log(address, " has mint key:", hasMintKey);
+  ////////////// UNLOCK PROTOCOL: THE END /////////////
+
+  // 🧠 This effect will update collectibles by polling when your balance changes
+  const balanceContract = useContractReader(readContracts, "ActionCollectible", "balanceOf", [address]);
+  const [balance, setBalance] = useState();
+
+  useEffect(() => {
+    if (balanceContract) {
+      setBalance(balanceContract);
+    }
+  }, [balanceContract]);
+  const [collectibles, setCollectibles] = useState();
+
+  useEffect(() => {
+    const updateCollectibles = async () => {
+      const collectibleUpdate = [];
+      for (let tokenIndex = 0; tokenIndex < balance; ++tokenIndex) {
+        try {
+          console.log("Getting token index " + tokenIndex);
+          const tokenId = await readContracts.DreadGang.tokenOfOwnerByIndex(address, tokenIndex);
+          console.log("tokenId: " + tokenId);
+          const tokenURI = await readContracts.DreadGang.tokenURI(tokenId);
+          const jsonManifestString = Buffer.from(tokenURI.substring(29), "base64").toString();
+          console.log("jsonManifestString: " + jsonManifestString);
+
+          try {
+            const jsonManifest = JSON.parse(jsonManifestString);
+            console.log("jsonManifest: " + jsonManifest);
+            collectibleUpdate.push({ id: tokenId, uri: tokenURI, owner: address, ...jsonManifest });
+          } catch (err) {
+            console.log(err);
+          }
+        } catch (err) {
+          console.log(err);
+        }
+      }
+      setCollectibles(collectibleUpdate.reverse());
+    };
+    if (address && balance) updateCollectibles();
+  }, [address, balance]);
 
   const faucetAvailable = localProvider && localProvider.connection && targetNetwork.name.indexOf("local") !== -1;
 
@@ -298,39 +410,136 @@ function App(props) {
       />
       <Menu style={{ textAlign: "center", marginTop: 20 }} selectedKeys={[location.pathname]} mode="horizontal">
         <Menu.Item key="/">
-          <Link to="/">App Home</Link>
+          <Link
+            onClick={() => {
+              setRoute("/");
+            }}
+            to="/"
+          >
+            Home
+          </Link>
         </Menu.Item>
-        <Menu.Item key="/debug">
-          <Link to="/debug">Debug Contracts</Link>
+        <Menu.Item key="/dashboard">
+          <Link
+            onClick={() => {
+              setRoute("/dashboard");
+            }}
+            to="/dashboard"
+          >
+            Dashboard
+          </Link>
         </Menu.Item>
-        <Menu.Item key="/hints">
-          <Link to="/hints">Hints</Link>
+        <Menu.Item key="/transfers">
+          <Link
+            onClick={() => {
+              setRoute("/transfers");
+            }}
+            to="/transfers"
+          >
+            Transfers
+          </Link>
         </Menu.Item>
-        <Menu.Item key="/exampleui">
-          <Link to="/exampleui">ExampleUI</Link>
+        <Menu.Item key="/levels">
+          <Link
+            onClick={() => {
+              setRoute("/levels");
+            }}
+            to="/levels"
+          >
+            Created Levels
+          </Link>
         </Menu.Item>
-        <Menu.Item key="/mainnetdai">
-          <Link to="/mainnetdai">Mainnet DAI</Link>
-        </Menu.Item>
-        <Menu.Item key="/subgraph">
-          <Link to="/subgraph">Subgraph</Link>
+        <Menu.Item key="/debugcontracts">
+          <Link
+            onClick={() => {
+              setRoute("/debugcontracts");
+            }}
+            to="/debugcontracts"
+          >
+            Debug Contracts
+          </Link>
         </Menu.Item>
       </Menu>
 
       <Switch>
         <Route exact path="/">
           {/* pass in any web3 props to this Home component. For example, yourLocalBalance */}
-          <Home yourLocalBalance={yourLocalBalance} readContracts={readContracts} />
+          <Home
+            readContracts={readContracts}
+            userSigner={userSigner}
+            injectedProvider={injectedProvider}
+            writeContracts={writeContracts}
+            tx={tx}
+            hasMintKey={hasMintKey}
+            isSquadMember={isSquadMember}
+            loadWeb3Modal={loadWeb3Modal}
+            blockExplorer={blockExplorer}
+            address={address}
+            publicLockContract={mintLock}
+          />
         </Route>
-        <Route exact path="/debug">
-          {/*
-                🎛 this scaffolding is full of commonly used components
-                this <Contract/> component will automatically parse your ABI
-                and give you a form to interact with it locally
-            */}
-
+        <Route path="/dashboard">
+          <div style={{ width: 850, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+            <Dashboard
+              yourCollectibles={collectibles}
+              address={address}
+              tx={tx}
+              tokenBalance={tokenBalance}
+              readContracts={readContracts}
+              writeContracts={writeContracts}
+            />
+          </div>
+        </Route>
+        <Route path="/transfers">
+          <div style={{ width: 600, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+            <List
+              bordered
+              dataSource={transferEvents}
+              renderItem={item => {
+                return (
+                  <List.Item key={item[0] + "_" + item[1] + "_" + item.blockNumber + "_" + item.args[2].toNumber()}>
+                    <span style={{ fontSize: 16, marginRight: 8 }}>#{item.args[2].toNumber()}</span>
+                    <Address address={item.args[0]} ensProvider={mainnetProvider} fontSize={16} /> =&gt;
+                    <Address address={item.args[1]} ensProvider={mainnetProvider} fontSize={16} />
+                  </List.Item>
+                );
+              }}
+            />
+          </div>
+        </Route>
+        <Route path="/levels">
+          <Levels createLevelEvents={createLevelEvents} mainnetProvider={mainnetProvider} />
+        </Route>
+        <Route path="/level/:id">
+          <Level
+            abis={abis}
+            userSigner={userSigner}
+            address={address}
+            dreadGangAddress={dreadGangAddress}
+            writeContracts={writeContracts}
+          />
+        </Route>
+        <Route exact path="/debugcontracts">
           <Contract
-            name="YourContract"
+            name="DGToken"
+            price={price}
+            signer={userSigner}
+            provider={localProvider}
+            address={address}
+            blockExplorer={blockExplorer}
+            contractConfig={contractConfig}
+          />
+          <Contract
+            name="DreadGang"
+            price={price}
+            signer={userSigner}
+            provider={localProvider}
+            address={address}
+            blockExplorer={blockExplorer}
+            contractConfig={contractConfig}
+          />
+          <Contract
+            name="DreadGangState"
             price={price}
             signer={userSigner}
             provider={localProvider}
@@ -339,58 +548,15 @@ function App(props) {
             contractConfig={contractConfig}
           />
         </Route>
-        <Route path="/hints">
-          <Hints
-            address={address}
-            yourLocalBalance={yourLocalBalance}
-            mainnetProvider={mainnetProvider}
-            price={price}
-          />
-        </Route>
-        <Route path="/exampleui">
-          <ExampleUI
-            address={address}
-            userSigner={userSigner}
-            mainnetProvider={mainnetProvider}
-            localProvider={localProvider}
-            yourLocalBalance={yourLocalBalance}
-            price={price}
-            tx={tx}
-            writeContracts={writeContracts}
-            readContracts={readContracts}
-            purpose={purpose}
-          />
-        </Route>
-        <Route path="/mainnetdai">
-          <Contract
-            name="DAI"
-            customContract={mainnetContracts && mainnetContracts.contracts && mainnetContracts.contracts.DAI}
-            signer={userSigner}
-            provider={mainnetProvider}
-            address={address}
-            blockExplorer="https://etherscan.io/"
-            contractConfig={contractConfig}
-            chainId={1}
-          />
-          {/*
-            <Contract
-              name="UNI"
-              customContract={mainnetContracts && mainnetContracts.contracts && mainnetContracts.contracts.UNI}
-              signer={userSigner}
-              provider={mainnetProvider}
-              address={address}
-              blockExplorer="https://etherscan.io/"
-            />
-            */}
-        </Route>
-        <Route path="/subgraph">
+
+        {/* <Route path="/subgraph">
           <Subgraph
             subgraphUri={props.subgraphUri}
             tx={tx}
             writeContracts={writeContracts}
             mainnetProvider={mainnetProvider}
           />
-        </Route>
+        </Route> */}
       </Switch>
 
       <ThemeSwitch />
