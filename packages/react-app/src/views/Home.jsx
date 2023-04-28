@@ -1,8 +1,9 @@
 import { useContractReader } from "eth-hooks";
 import { ethers } from "ethers";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
+import InfiniteScroll from "react-infinite-scroll-component";
+const buidlBuxxAbi = require("../contracts/erc20.json");
 /**
  * web3 props can be passed from '../App.jsx' into your local view component for use
  * @param {*} yourLocalBalance balance on current network
@@ -10,113 +11,74 @@ import { Link } from "react-router-dom";
  * @returns react component
  **/
 function Home({ yourLocalBalance, readContracts }) {
-  // you can also use hooks locally in your component of choice
-  // in this case, let's keep track of 'purpose' variable from our contract
-  const purpose = useContractReader(readContracts, "YourContract", "purpose");
+  // const provider = new ethers.providers.WebSocketProvider(`wss://zksync2-mainnet.zksync.io/ws`);
+  const provider = new ethers.providers.WebSocketProvider(`wss://zksync2-testnet.zksync.dev/ws`); // testnet
 
+  // const buidlBuxxAddress = "0x1bbA25233556a7C3b41913F35A035916DbeD1664"; // replace with your contract address
+  const buidlBuxxAddress = "0x0faf6df7054946141266420b43783387a78d82a9"; // replace with your contract address
+
+  const [transferEvents, setTransferEvents] = useState([]);
+  const [searchValue, setSearchValue] = useState("");
+  const [hasMore, setHasMore] = useState(true);
+  const buidlBuxxContract = new ethers.Contract(buidlBuxxAddress, buidlBuxxAbi, provider);
+  console.log("test buildBux", buidlBuxxContract);
+
+  buidlBuxxContract.on("Transfer", (from, to, value, event) => {
+    setTransferEvents(prevEvents => [...prevEvents, event.args]);
+  });
+
+  const handleSearchChange = event => {
+    setSearchValue(event.target.value);
+  };
+
+  const filteredEvents = transferEvents.filter(event => {
+    // return event.timestamp.includes(searchValue) || event.from.includes(searchValue) || event.to.includes(searchValue);
+    try {
+      return event.timestamp.includes(searchValue) || event.to.includes(searchValue);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+  const loadMore = async () => {
+    const fromBlock = transferEvents.length === 0 ? 0 : transferEvents[transferEvents.length - 1].blockNumber + 1;
+    const toBlock = fromBlock + 99;
+
+    const events = await buidlBuxxContract.queryFilter("Transfer", fromBlock, toBlock);
+    setTransferEvents(prevEvents => [...prevEvents, ...events]);
+
+    // if (events.length < 100) {
+    if (events.length > 10) {
+      setHasMore(false);
+    }
+  };
+  console.log("test", transferEvents);
   return (
     <div>
-      <div style={{ margin: 32 }}>
-        <span style={{ marginRight: 8 }}>📝</span>
-        This Is Your App Home. You can start editing it in{" "}
-        <span
-          className="highlight"
-          style={{ marginLeft: 4, /* backgroundColor: "#f9f9f9", */ padding: 4, borderRadius: 4, fontWeight: "bolder" }}
-        >
-          packages/react-app/src/views/Home.jsx
-        </span>
-      </div>
-      <div style={{ margin: 32 }}>
-        <span style={{ marginRight: 8 }}>✏️</span>
-        Edit your smart contract{" "}
-        <span
-          className="highlight"
-          style={{ marginLeft: 4, /* backgroundColor: "#f9f9f9", */ padding: 4, borderRadius: 4, fontWeight: "bolder" }}
-        >
-          YourContract.sol
-        </span>{" "}
-        in{" "}
-        <span
-          className="highlight"
-          style={{ marginLeft: 4, /* backgroundColor: "#f9f9f9", */ padding: 4, borderRadius: 4, fontWeight: "bolder" }}
-        >
-          packages/hardhat/contracts
-        </span>
-      </div>
-      {!purpose ? (
-        <div style={{ margin: 32 }}>
-          <span style={{ marginRight: 8 }}>👷‍♀️</span>
-          You haven't deployed your contract yet, run
-          <span
-            className="highlight"
-            style={{
-              marginLeft: 4,
-              /* backgroundColor: "#f9f9f9", */ padding: 4,
-              borderRadius: 4,
-              fontWeight: "bolder",
-            }}
-          >
-            yarn chain
-          </span>{" "}
-          and{" "}
-          <span
-            className="highlight"
-            style={{
-              marginLeft: 4,
-              /* backgroundColor: "#f9f9f9", */ padding: 4,
-              borderRadius: 4,
-              fontWeight: "bolder",
-            }}
-          >
-            yarn deploy
-          </span>{" "}
-          to deploy your first contract!
-        </div>
-      ) : (
-        <div style={{ margin: 32 }}>
-          <span style={{ marginRight: 8 }}>🤓</span>
-          The "purpose" variable from your contract is{" "}
-          <span
-            className="highlight"
-            style={{
-              marginLeft: 4,
-              /* backgroundColor: "#f9f9f9", */ padding: 4,
-              borderRadius: 4,
-              fontWeight: "bolder",
-            }}
-          >
-            {purpose}
-          </span>
-        </div>
-      )}
-
-      <div style={{ margin: 32 }}>
-        <span style={{ marginRight: 8 }}>🤖</span>
-        An example prop of your balance{" "}
-        <span style={{ fontWeight: "bold", color: "green" }}>({ethers.utils.formatEther(yourLocalBalance)})</span> was
-        passed into the
-        <span
-          className="highlight"
-          style={{ marginLeft: 4, /* backgroundColor: "#f9f9f9", */ padding: 4, borderRadius: 4, fontWeight: "bolder" }}
-        >
-          Home.jsx
-        </span>{" "}
-        component from
-        <span
-          className="highlight"
-          style={{ marginLeft: 4, /* backgroundColor: "#f9f9f9", */ padding: 4, borderRadius: 4, fontWeight: "bolder" }}
-        >
-          App.jsx
-        </span>
-      </div>
-      <div style={{ margin: 32 }}>
-        <span style={{ marginRight: 8 }}>💭</span>
-        Check out the <Link to="/hints">"Hints"</Link> tab for more tips.
-      </div>
-      <div style={{ margin: 32 }}>
-        <span style={{ marginRight: 8 }}>🛠</span>
-        Tinker with your smart contract using the <Link to="/debug">"Debug Contract"</Link> tab.
-      </div>
+      <h1>ETH Denver Admin | BackUp</h1>
+      <InfiniteScroll dataLength={transferEvents.length} next={loadMore} hasMore={hasMore} loader={<h4>Loading...</h4>}>
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transferEvents && transferEvents.length
+              ? transferEvents.map(event => (
+                  <tr key={event.transactionHash}>
+                    <td>{event.timestamp}</td>
+                    <td>{event.from}</td>
+                    <td>{event.to}</td>
+                    <td>{event.value.toString()}</td>
+                  </tr>
+                ))
+              : null}
+          </tbody>
+        </table>
+      </InfiniteScroll>
     </div>
   );
 }

@@ -46,6 +46,15 @@ export const NETWORKS = {
     blockExplorer: "https://goerli.etherscan.io/",
     rpcUrl: `https://goerli.infura.io/v3/${INFURA_ID}`,
   },
+  zksync: {
+    name: "zksync",
+    color: "#45488f",
+    chainId: 324,
+    rpcUrl: "https://zksync2-mainnet.zksync.io",
+    blockExplorer: "https://explorer.zksync.io/",
+    // gasPrice: 1000000000,
+    // faucet: "https://gnosisfaucet.com/",
+  },
   gnosis: {
     name: "gnosis",
     color: "#48a9a6",
